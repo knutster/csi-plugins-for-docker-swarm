@@ -2,11 +2,23 @@
 	"description": "AWS EBS CSI driver for Docker Swarm",
 	"documentation": "https://github.com/olljanat/csi-plugins-for-docker-swarm",
 	"entrypoint": [
-		"/entrypoint.sh"
+		"/bin/aws-ebs-csi-driver",
+		"all",
+		"--endpoint=unix:///run/docker/plugins/csi.sock",
+		"--v=10"
 	],
-	"env": [],
+	"env": [
+		{
+			"name": "CSI_ENDPOINT",
+			"value": "unix:///run/docker/plugins/csi.sock"
+		},
+		{
+			"name": "AWS_REGION",
+			"value": "eu-west-1"
+		}
+	],
 	"interface": {
-		"socket": "csi-aws-ebs.sock",
+		"socket": "csi.sock",
 		"types": [
 			"docker.csicontroller/1.0",
 			"docker.csinode/1.0"
@@ -14,16 +26,22 @@
 	},
 	"linux": {
 		"capabilities": [
-			"CAP_SYS_ADMIN"
-		]
+			"CAP_SYS_ADMIN",
+			"CAP_CHOWN"
+		],
+		"allowAllDevices": true
 	},
 	"mounts": [
 		{
-			"name":"/etc/hostname",
-			"destination":"/node_hostname",
-			"source":"/etc/hostname",
-			"type":"bind",
-			"options":["bind"]
+			"description": "used to access the dynamically attached block devices",
+			"destination": "/dev",
+			"options": [
+				"rbind",
+				"rshared"
+			],
+			"name": "dev",
+			"source": "/dev/",
+			"type": "bind"
 		}
 	],
 	"network": {
